@@ -5,7 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents("php://input"), true);
 
     // Validate Household Data
-    $requiredFields = ['household_id', 'hhstreet', 'hhzone', 'lot', 'materialused', 'toiletfacility', 'meansofcommunication', 'sourceofwater', 'electricity', 'hhwith', 'familyincome', 'residents'];
+    $requiredFields = ['household_id', 'household_street', 'household_zone', 'household_lot', 'material_used', 'toilet_facility', 'means_of_communication', 'source_of_water', 'electricity', 'household_with', 'family_income', 'residents'];
     foreach ($requiredFields as $field) {
         if (!isset($data[$field])) {
             echo json_encode(["success" => false, "message" => "Missing required field: $field"]);
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // tighali ko si id
     // Validate Residents Data BEFORE updating household
     foreach ($residents as $resident) {
-        $residentRequiredFields = ['fname', 'lname', 'cstatus', 'religion', 'dbirth', 'age', 'gender', 'education', 'occupation', 'beneficiary', 'pregnant', 'disability', 'hhtype'];
+        $residentRequiredFields = ['first_name', 'last_name', 'civil_status', 'religion', 'birth_date', 'age', 'gender', 'education', 'occupation', 'beneficiary', 'pregnant', 'disability', 'household_type'];
         foreach ($residentRequiredFields as $rField) {
             if (!isset($resident[$rField])) {
                 echo json_encode(["success" => false, "message" => "Missing resident field: $rField"]);
@@ -31,25 +31,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn->begin_transaction();
     try {
         // Update household
-        $stmt = $conn->prepare("UPDATE households SET hhstreet = ?, hhzone = ?, lot = ?, materialused = ?, toiletfacility = ?, meansofcommunication = ?, sourceofwater = ?, electricity = ?, hhwith = ?, familyincome = ? WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE households SET household_street = ?, household_zone = ?, household_lot = ?, material_used = ?, toilet_facility = ?, means_of_communication = ?, source_of_water = ?, electricity = ?, household_with = ?, family_income = ? WHERE id = ?");
         
-        $stmt->bind_param("ssssssssssi", $data['hhstreet'], $data['hhzone'], $data['lot'], $data['materialused'], 
-            $data['toiletfacility'], $data['meansofcommunication'], $data['sourceofwater'], $data['electricity'], 
-            $data['hhwith'], $data['familyincome'], $household_id);
+        $stmt->bind_param("ssssssssssi", $data['household_street'], $data['household_zone'], $data['household_lot'], $data['material_used'], 
+            $data['toilet_facility'], $data['means_of_communication'], $data['source_of_water'], $data['electricity'], 
+            $data['household_with'], $data['family_income'], $household_id);
         $stmt->execute();
 
         // Update residents
         $stmt = $conn->prepare("UPDATE residents SET 
-            profilepicture = ?, 
-            fname = ?, 
-            mname = ?, 
-            lname = ?, 
+            profile_picture = ?, 
+            first_name = ?, 
+            middle_name = ?, 
+            last_name = ?, 
             suffix = ?, 
             alias = ?, 
-            cnumber = ?, 
-            cstatus = ?, 
+            contact_number = ?, 
+            civil_status = ?, 
             religion = ?, 
-            dbirth = ?, 
+            birth_date = ?, 
             age = ?, 
             gender = ?, 
             education = ?, 
@@ -57,35 +57,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             beneficiary = ?, 
             pregnant = ?, 
             disability = ?, 
-            hhtype = ? 
+            household_type = ? 
         WHERE id = ?"); 
 
         foreach ($residents as $resident) {
             $stmt->bind_param("ssssssssssisssssssi", 
-                $resident['profilepicture'], 
-                $resident['fname'],
-                $resident['mname'], 
-                $resident['lname'], 
-                $resident['suffix'], 
-                $resident['alias'], 
-                $resident['cnumber'], 
-                $resident['cstatus'], 
-                $resident['religion'], 
-                $resident['dbirth'],
-                $resident['age'], 
-                $resident['gender'], 
-                $resident['education'], 
-                $resident['occupation'], 
-                $resident['beneficiary'], 
-                $resident['pregnant'], 
-                $resident['disability'], 
-                $resident['hhtype'], 
-                $resident['id']); 
-            
+                    $resident['profile_picture'], 
+                    $resident['first_name'],
+                    $resident['middle_name'], 
+                    $resident['last_name'], 
+                    $resident['suffix'], 
+                    $resident['alias'], 
+                    $resident['contact_number'], 
+                    $resident['civil_status'], 
+                    $resident['religion'], 
+                    $resident['birth_date'],
+                    $resident['age'], 
+                    $resident['gender'], 
+                    $resident['education'], 
+                    $resident['occupation'], 
+                    $resident['beneficiary'], 
+                    $resident['pregnant'], 
+                    $resident['disability'], 
+                    $resident['household_type'], 
+                    $resident['id']); 
+                
             if (!$stmt->execute()) {
                 echo json_encode(["success" => false, "message" => "Error updating resident: " . $stmt->error]);
-                exit();
-            }
+                    exit();
+                }
         }
 
         $conn->commit();

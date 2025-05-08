@@ -15,6 +15,8 @@ class IndividualPage extends StatefulWidget {
 
 class IndividualPageState extends State<IndividualPage> {
 
+  bool _isSortedAscending = true; // Track sorting order
+  
   int _currentPage = 0;
   final int _itemsPerPage = 15;
   List<Map<String, dynamic>> _allRecords = [];
@@ -53,19 +55,19 @@ class IndividualPageState extends State<IndividualPage> {
 
     List<Map<String, dynamic>> filteredRecords = _allRecords.where((record) {
       // Normalize full name (remove commas)
-      String fullName = "${record['lname']} ${record['fname']} ${record['mname'] ?? ''} ${record['suffix'] ?? ''}"
+      String fullName = "${record['last_name']} ${record['first_name']} ${record['middle_name'] ?? ''} ${record['suffix'] ?? ''}"
           .replaceAll(',', '') // Remove hardcoded commas
           .trim()
           .toLowerCase();
 
       // Normalize address (remove commas)
-      String address = "${record['hhstreet']} ${record['hhzone']} ${record['lot'] ?? ''}"
+      String address = "${record['household_street']} ${record['household_zone']} ${record['household_lot'] ?? ''}"
           .replaceAll(',', '') // Remove hardcoded commas
           .trim()
           .toLowerCase();
 
       // Contact and age (no need to modify)
-      String contact = record['cnumber'].toString().trim();
+      String contact = record['contact_number'].toString().trim();
       String age = record['age'].toString().trim();
 
       // search works even if user enters commas or not
@@ -94,12 +96,12 @@ class IndividualPageState extends State<IndividualPage> {
   void _goToNextPage() {
     int totalFilteredRecords = _allRecords
         .where((record) =>
-            record['lname'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['fname'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['cnumber'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['hhstreet'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['hhzone'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['lot'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['last_name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['first_name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['contact_number'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['household_street'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['household_zone'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['household_lot'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
             record['age'].toString().toLowerCase().contains(_searchQuery.toLowerCase()))
         .length;
 
@@ -233,6 +235,17 @@ class IndividualPageState extends State<IndividualPage> {
     );
   }
 
+  void _toggleSortByLastName() {
+    setState(() {
+      _isSortedAscending = !_isSortedAscending; 
+      _allRecords.sort((a, b) {
+        String lastNameA = a['last_name'].toLowerCase(); 
+        String lastNameB = b['last_name'].toLowerCase(); 
+        return _isSortedAscending ? lastNameA.compareTo(lastNameB) : lastNameB.compareTo(lastNameA);
+      });
+    });
+  }
+  
   Widget _buildTableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
@@ -243,7 +256,38 @@ class IndividualPageState extends State<IndividualPage> {
       ),
       child: Row(
         children: [
-          const HeaderCellWidget(label: 'Full Name', flex: 3),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8), 
+              child: Row(
+                children: [
+                  const Text(
+                    'Full Name',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
+                      color: Color(0xFF4B4B4B),
+                    ),
+                  ),
+                  const SizedBox(width: 4), 
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(50),
+                      onTap: _toggleSortByLastName,
+                      child: Icon(
+                        _isSortedAscending ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
+                        size: 20, 
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const HeaderCellWidget(label: 'Address', flex: 4),
           const HeaderCellWidget(label: 'Age', flex: 1, center: true),
           const HeaderCellWidget(label: 'Gender', flex: 2, center: true),
@@ -271,11 +315,11 @@ class IndividualPageState extends State<IndividualPage> {
           ),
           child: Row(
             children: [
-              DataCellWidget(value: '${record['lname']}, ${record['fname']} ${record['mname'] ?? ''} ${record['suffix'] ?? ''}', flex: 3),
-              DataCellWidget(value: '${record['hhstreet']}, ${record['hhzone']}, ${record['lot'] ?? ''} Barangay Buenavista', flex: 4),
+              DataCellWidget(value: '${record['last_name']}, ${record['first_name']} ${record['middle_name'] ?? ''} ${record['suffix'] ?? ''}', flex: 3),
+              DataCellWidget(value: '${record['household_street']}, ${record['household_zone']}, ${record['household_lot'] ?? ''} Barangay Buenavista', flex: 4),
               DataCellWidget(value: record['age'], flex: 1, center: true),
               DataCellWidget(value: record['gender'], flex: 2, center: true),
-              DataCellWidget(value: record['cnumber'], flex: 2, center: true),
+              DataCellWidget(value: record['contact_number'], flex: 2, center: true),
               DataCellWidget(value: record['pregnantcheck'], showIcon: true, flex: 1, center: true),
               DataCellWidget(value: record['pwdcheck'], showIcon: true, flex: 1, center: true),
               DataCellWidget(value: record['seniorcheck'], showIcon: true, flex: 1, center: true),

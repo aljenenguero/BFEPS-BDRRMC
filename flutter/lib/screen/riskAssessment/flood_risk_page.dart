@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'ra_report_page.dart';
 
 class FloodRiskReports extends StatelessWidget {
-  const FloodRiskReports({super.key});
+  final Function(String, Widget) onMenuSelect;
+
+  const FloodRiskReports({super.key, required this.onMenuSelect});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent, 
       body: Padding(
         padding: const EdgeInsets.all(30.0),
         child: Column(
@@ -32,23 +35,17 @@ class FloodRiskReports extends StatelessWidget {
                         height: 90,
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const FloodUpdatesPage()),
-                            );
+                            onMenuSelect('Record of Flood', FloodUpdatesPage(onMenuSelect: onMenuSelect));
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white.withOpacity(1),
-                            foregroundColor: Color.fromARGB(255, 54, 124, 177),
-                            side: const BorderSide(
-                                color: Color.fromARGB(255, 28, 80, 201)),
+                            foregroundColor: const Color.fromARGB(255, 54, 124, 177),
+                            side: const BorderSide(color: Color.fromARGB(255, 28, 80, 201)),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: Text('Record of Flood'),
+                          child: const Text('Record of Flood'),
                         ),
                       ),
                     ),
@@ -61,22 +58,17 @@ class FloodRiskReports extends StatelessWidget {
                         height: 90,
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const RaReportPage()),
-                            );
+                            onMenuSelect('Risk Assessment Report', const RaReportPage());
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white.withOpacity(1),
-                            foregroundColor: Color.fromARGB(255, 54, 124, 177),
-                            side: const BorderSide(
-                                color: Color.fromARGB(255, 28, 80, 201)),
+                            foregroundColor: const Color.fromARGB(255, 54, 124, 177),
+                            side: const BorderSide(color: Color.fromARGB(255, 28, 80, 201)),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: Text('Risk Assessment Report'),
+                          child: const Text('Risk Assessment Report'),
                         ),
                       ),
                     ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'components/header_bar.dart';
 import 'components/side_bar.dart';
 import 'screen/dashboard_page.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
       title: 'BFEPS',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: const Color(0xFFF6F7F9),
+        scaffoldBackgroundColor: const Color(0xFFF6F7F9), 
         textSelectionTheme: const TextSelectionThemeData(
           selectionColor: Color.fromARGB(255, 199, 210, 255),
           cursorColor: Color(0xFF5576F5),

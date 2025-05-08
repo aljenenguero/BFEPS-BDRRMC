@@ -5,16 +5,16 @@ include 'db_connect.php';
 $sql = "
     SELECT 
         residents.id AS resident_id,
-        residents.profilepicture,
-        residents.fname,
-        residents.mname,
-        residents.lname,
+        residents.profile_picture,
+        residents.first_name,
+        residents.middle_name,
+        residents.last_name,
         residents.suffix,
         residents.alias,
-        residents.cnumber,
-        residents.cstatus,
+        residents.contact_number,
+        residents.civil_status,
         residents.religion,
-        residents.dbirth,
+        residents.birth_date,
         residents.age,
         residents.gender,
         residents.education,
@@ -22,19 +22,19 @@ $sql = "
         residents.beneficiary,
         residents.pregnant,
         residents.disability,
-        residents.hhtype,
+        residents.household_type,
         
         households.id AS household_id,
-        households.hhstreet, 
-        households.hhzone, 
-        households.lot,
-        households.materialused,
-        households.toiletfacility,
-        households.meansofcommunication,
-        households.sourceofwater,   
+        households.household_street, 
+        households.household_zone, 
+        households.household_lot,
+        households.material_used,
+        households.toilet_facility,
+        households.means_of_communication,
+        households.source_of_water,   
         households.electricity,
-        households.hhwith,
-        households.familyincome,
+        households.household_with,
+        households.family_income,
 
         CASE WHEN residents.disability IN ('Visual Impairment', 'Hearing Impairment', 'Speech Impairment', 'Physical Disability', 'Intellectual Disability', 'Psychosocial Disability', 'Learning Disability', 'Multiple Disabilities', 'Others') THEN 1 ELSE 0 END AS pwdcheck,
         CASE WHEN residents.age < 18 THEN 1 ELSE 0 END AS underagedcheck,
@@ -44,7 +44,7 @@ $sql = "
         
     FROM residents
     JOIN households ON households.id = residents.household_id
-    ORDER BY residents.lname, residents.fname
+    ORDER BY residents.last_name, residents.first_name
 ";
 
 $result = $conn->query($sql);

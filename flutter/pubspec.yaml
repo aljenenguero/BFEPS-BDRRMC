@@ -21,6 +21,7 @@ dependencies:
   latlong2: ^0.9.1
   flutter_map: ^8.1.0
   intl: ^0.17.0 #for date formatting
+  shared_preferences: ^2.5.3
 
 
 dev_dependencies:

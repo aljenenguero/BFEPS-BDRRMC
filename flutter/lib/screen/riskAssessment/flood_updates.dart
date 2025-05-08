@@ -6,9 +6,13 @@ import 'package:http/http.dart' as http;
 import '../../dialogs/validation_dialog.dart';
 import '../../widgets/buttons/add_button.dart';
 import '../../widgets/buttons/save_button.dart';
+import 'flood_risk_page.dart';
 
 class FloodUpdatesPage extends StatefulWidget {
-  const FloodUpdatesPage({super.key});
+  
+  final Function(String, Widget) onMenuSelect;
+
+  const FloodUpdatesPage({super.key, required this.onMenuSelect});
 
   @override
   _FloodUpdatesPageState createState() => _FloodUpdatesPageState();
@@ -20,9 +24,16 @@ class _FloodUpdatesPageState extends State<FloodUpdatesPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFF6F7F9),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            widget.onMenuSelect('Flood Risk Reports', FloodRiskReports(onMenuSelect: widget.onMenuSelect));
+          },
+        ),
+        title: const Text('Flood Updates'),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 5),
         child: Column(
           children: [
             Row(

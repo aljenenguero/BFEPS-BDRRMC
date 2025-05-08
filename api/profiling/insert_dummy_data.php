@@ -28,30 +28,30 @@ $communications = ['Telephone', 'Cellphone', 'Internet', 'None'];
 $waterSources = ['Community Water System (Owned)', 'Community Water System (Shared)', 'Deep and Shallow Well (Owned)', 'Deep and Shallow Well (Shared)', 'Bottled Water/Purified/Distilled Water'];
 $electricityOptions = ['Yes', 'No'];
 $householdWithOptions = ['Vegetable Garden', 'Poultry', 'Livestock', 'Fishpond', 'None', 'Others'];
-$familyIncomes = ['₱5,000 (Below)', '₱6,000 - ₱10,000', '₱11,000 - ₱15,000', '₱16,000 - ₱20,000', '₱21,000 - ₱25,000', '₱26,000 - above'];
+$family_incomes = ['₱5,000 (Below)', '₱6,000 - ₱10,000', '₱11,000 - ₱15,000', '₱16,000 - ₱20,000', '₱21,000 - ₱25,000', '₱26,000 - above'];
 
 $numHouseholds = 10; // Number of dummy households
 $numResidentsPerHousehold = rand(1, 10); // Random number of residents per household
 
 for ($h = 1; $h <= $numHouseholds; $h++) {
     // Insert household first
-    $hhstreet = "Street " . $h;
-    $hhzone = "Zone " . rand(1, 5);
-    $lot = rand(1, 100);
-    $materialused = getRandomElement($constructionMaterials);
-    $toiletfacility = getRandomElement($toiletFacilities);
+    $household_street = "Street " . $h;
+    $household_zone = "Zone " . rand(1, 5);
+    $household_lot = rand(1, 100);
+    $material_used = getRandomElement($constructionMaterials);
+    $toilet_facility = getRandomElement($toiletFacilities);
     $communication = getRandomElement($communications);
     $waterSource = getRandomElement($waterSources);
     $electricity = getRandomElement($electricityOptions);
-    $hhwith = getRandomElement($householdWithOptions);
-    $familyincome = getRandomElement($familyIncomes);
+    $household_with = getRandomElement($householdWithOptions);
+    $family_income = getRandomElement($family_incomes);
 
     // Fix: Use variables, not array names
-    $householdSql = "INSERT INTO households (hhstreet, hhzone, lot, materialused, toiletfacility, meansofcommunication, 
-                     sourceofwater, electricity, hhwith, familyincome) 
-                     VALUES ('$hhstreet', '$hhzone', '$lot', '$materialused', '$toiletfacility', '$communication', 
-                     '$waterSource', '$electricity', '$hhwith', '$familyincome')";
-
+    $householdSql = "INSERT INTO households (household_street, household_zone, household_lot, material_used, toilet_facility, means_of_communication, 
+                     source_of_water, electricity, household_with, family_income) 
+                     VALUES ('$household_street', '$household_zone', '$household_lot', '$material_used', '$toilet_facility', '$communication', 
+                     '$waterSource', '$electricity', '$household_with', '$family_income')";
+    
     if ($conn->query($householdSql) === TRUE) {
         $householdId = $conn->insert_id; // Get the inserted household ID
 
@@ -59,13 +59,13 @@ for ($h = 1; $h <= $numHouseholds; $h++) {
         $isHeadAssigned = false;
 
         for ($r = 0; $r < $numResidentsPerHousehold; $r++) {
-            $fname = getRandomElement($firstNames);
-            $lname = getRandomElement($lastNames);
+            $first_name = getRandomElement($firstNames);
+            $last_name = getRandomElement($lastNames);
             $gender = getRandomElement($genders);
-            $cnumber = "09" . rand(100000000, 999999999); // Generate random phone number
+            $contact_number = "09" . rand(100000000, 999999999); // Generate random phone number
             $age = rand(1, 99);
             $dob = date("Y-m-d", strtotime("-$age years"));
-            $cstatus = getRandomElement($civilStatuses);
+            $civil_status = getRandomElement($civilStatuses);
             $religion = getRandomElement($religions);
             $education = getRandomElement($educations);
             $occupation = getRandomElement($occupations);
@@ -75,19 +75,19 @@ for ($h = 1; $h <= $numHouseholds; $h++) {
 
             // Ensure only **one** "Head of the Household"
             if (!$isHeadAssigned) {
-                $hhtype = "Head of the Household";
+                $household_type = "Head of the Household";
                 $isHeadAssigned = true;
             } else {
-                $hhtype = getRandomElement($householdMemberTypes);
+                $household_type = getRandomElement($householdMemberTypes);
             }
 
             
             $occupation = $conn->real_escape_string($occupation);
 
-            $residentSql = "INSERT INTO residents (household_id, fname, lname, cnumber, gender, age, dbirth, cstatus, religion, 
-                            education, occupation, beneficiary, pregnant, disability, hhtype) 
-                            VALUES ('$householdId', '$fname', '$lname', '$cnumber', '$gender', '$age', '$dob', '$cstatus', 
-                            '$religion', '$education', '$occupation', '$beneficiary', '$pregnant', '$disability', '$hhtype')";
+            $residentSql = "INSERT INTO residents (household_id, first_name, last_name, contact_number, gender, age, birth_date, civil_status, religion, 
+                            education, occupation, beneficiary, pregnant, disability, household_type) 
+                            VALUES ('$householdId', '$first_name', '$last_name', '$contact_number', '$gender', '$age', '$dob', '$civil_status', 
+                            '$religion', '$education', '$occupation', '$beneficiary', '$pregnant', '$disability', '$household_type')";
 
             if ($conn->query($residentSql) === TRUE) {
                 echo "Resident $r in Household $householdId inserted successfully <br>";

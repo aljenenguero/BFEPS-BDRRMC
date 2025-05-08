@@ -40,6 +40,8 @@ class ReliefOperationPageState extends State<ReliefOperationPage> {
         List<dynamic> data = json.decode(response.body);
         setState(() {
           _allRecords = List<Map<String, dynamic>>.from(data);
+          // Sort records by date in descending order
+          _allRecords.sort((a, b) => DateTime.parse(b['report_date']).compareTo(DateTime.parse(a['report_date'])));
         });
       } else {
         throw Exception('Failed to load records');
@@ -84,17 +86,17 @@ class ReliefOperationPageState extends State<ReliefOperationPage> {
 
     List<Map<String, dynamic>> filteredRecords = _allRecords.where((report) {
 
-      String fullName = "${report['dname'] ?? ''}"
+      String fullName = "${report['donor_name'] ?? ''}"
           .replaceAll(',', '')
           .trim()
           .toLowerCase();
 
-      String itemName = "${report['iname'] ?? ''}"
+      String itemName = "${report['item_name'] ?? ''}"
           .replaceAll(',', '')
           .trim()
           .toLowerCase();
 
-      String date = "${report['ddate'] ?? ''}".trim().toLowerCase(); 
+      String date = "${report['report_date'] ?? ''}".trim().toLowerCase(); 
 
       bool nameMatches = queryWords.every((word) => fullName.contains(word));
       bool itemnameMatches = queryWords.every((word) => itemName.contains(word));
@@ -122,9 +124,9 @@ class ReliefOperationPageState extends State<ReliefOperationPage> {
   void _goToNextPage() {
     int totalFilteredRecords = _allRecords
         .where((report) =>
-            report['ddate'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            report['dname'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            report['iname'].toString().toLowerCase().contains(_searchQuery.toLowerCase()))
+            report['report_date'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            report['donor_name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            report['item_name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()))
         .length;
 
     int maxPages = (totalFilteredRecords / _itemsPerPage).ceil();
@@ -300,10 +302,10 @@ class ReliefOperationPageState extends State<ReliefOperationPage> {
           ),
           child: Row(
             children: [ 
-              DataCellWidget(value: report['ddate'] ?? '', flex: 2),
-              DataCellWidget(value: report['dname'] ?? '', flex: 3),
-              DataCellWidget(value: report['iname'] ?? '', flex: 2),
-              DataCellWidget(value: report['dtype'] ?? '', flex: 2, center: true),
+              DataCellWidget(value: report['report_date'] ?? '', flex: 2),
+              DataCellWidget(value: report['donor_name'] ?? '', flex: 3),
+              DataCellWidget(value: report['item_name'] ?? '', flex: 2),
+              DataCellWidget(value: report['donated_type'] ?? '', flex: 2, center: true),
               DataCellWidget(value: report['measure'] ?? '', flex: 2, center: true),
               DataCellWidget(value: report['quantity'] ?? '', flex: 1, center: true),
               DataCellWidget(value: '₱''${report['cost'] ?? ''}', flex: 2, center: true),
@@ -406,13 +408,13 @@ class ReliefReportFormState extends State<ReliefReportForm> {
     super.initState();
     if (widget.existingData != null) {
       // Populate the fields with existing data if available
-      dateController.text = widget.existingData!['ddate'] ?? '';
-      nameController.text = widget.existingData!['dname'] ?? '';
-      inameController.text = widget.existingData!['iname'] ?? '';
+      dateController.text = widget.existingData!['report_date'] ?? '';
+      nameController.text = widget.existingData!['donor_name'] ?? '';
+      inameController.text = widget.existingData!['item_name'] ?? '';
       quantityController.text = widget.existingData!['quantity'] ?? '';
       costController.text = widget.existingData!['cost'] ?? '';
       selectedBeneficiaries = widget.existingData!['beneficiaries'];
-      selectedType = widget.existingData!['dtype'];
+      selectedType = widget.existingData!['donated_type'];
       selectedMeasure = widget.existingData!['measure'];
       selectedProcess = widget.existingData!['process'];
       selectedVenue = widget.existingData!['venue'];
@@ -652,10 +654,10 @@ class ReliefReportFormState extends State<ReliefReportForm> {
       try {
         final data = {
           'id': widget.existingData?['id'], 
-          'ddate': dateController.text,
-          'dname': toCamelCase(nameController.text),
-          'iname': toCamelCase(inameController.text),
-          'dtype': selectedType,
+          'report_date': dateController.text,
+          'donor_name': toCamelCase(nameController.text),
+          'item_name': toCamelCase(inameController.text),
+          'donated_type': selectedType,
           'measure': selectedMeasure,
           'quantity': quantityController.text,
           'cost': costController.text,

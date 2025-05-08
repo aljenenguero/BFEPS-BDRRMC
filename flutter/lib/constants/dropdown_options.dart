@@ -3,21 +3,21 @@
 /// HOUSEHOLD PROFILING DROPDOWNS OPTIONS 
 const List<String> zoneOptions = ['Zone 1', 'Zone 2', 'Zone 3'];
 
-const List<String> civilStatusOptions = ['Single', 'Married', 'Widowed', 'Separated', 'Divorced', 'Common Law/Live-in', 'Others'];
+const List<String> civilStatusOptions = ['Single', 'Married', 'Widowed', 'Separated', 'Divorced', 'Common Law/Live-in'];
 
-const List<String> religionOptions = ['Roman Catholic', 'Born Again Christian', 'Iglesia ni Cristo', 'Muslim', 'Buddhist', 'Atheist', 'Others'];
+const List<String> religionOptions = ['Roman Catholic', 'Born Again Christian', 'Iglesia ni Cristo', 'Islam', 'Buddhist', 'Atheist', 'None'];
 
-const List<String> genderOptions = ['Female', 'Male', 'Non-binary', 'Transman', 'Transwoman', 'Prefer not to say', 'Others'];
+const List<String> genderOptions = ['Female', 'Male', 'Non-binary', 'Transman', 'Transwoman', 'Prefer not to say'];
 
 const List<String> educationOptions = [
   'Elementary Level', 'Elementary Graduate', 'Highschool Level', 'Highschool Graduate',
-  'College Level', 'College Graduate', 'Post Graduate', 'Vocational', 'None', 'Others'
+  'College Level', 'College Graduate', 'Post Graduate', 'Vocational', 'None', 
 ];
 
 const List<String> occupationOptions = [
   'Business Owner', 'Driver', 'Farmer', 'Fisherfolk', 'Gov\'t. Employee', 'Health Worker', 
   'Housekeeper', 'Housewife', 'Labourer', 'OFW', 'Private Employee', 'Retired', 'Security Personnel',
-  'Self Employed', 'Student', 'Teacher/Educator', 'Technician/Mechanic', 'Vendor', 'None', 'Others'
+  'Self Employed', 'Student', 'Teacher/Educator', 'Technician/Mechanic', 'Vendor', 'None', 
 ];
 
 const List<String> beneficiaryOptions = ['Yes', 'No'];
@@ -25,11 +25,11 @@ const List<String> beneficiaryOptions = ['Yes', 'No'];
 const List<String> pregnantOptions = ['Yes', 'No'];
 
 const List<String> disabilityOptions = ['Visual Impairment', 'Hearing Impairment', 'Speech Impairment', 'Physical Disability', 
-'Intellectual Disability', 'Psychosocial Disability', 'Learning Disability', 'Multiple Disabilities', 'None', 'Others',];
+'Intellectual Disability', 'Psychosocial Disability', 'Learning Disability', 'Multiple Disabilities', 'None'];
 
 const List<String> householdMemberTypeOptions = [
   'Head of the Household', 'Spouse', 'Child', 'Parent', 'Sibling', 'Grandparent', 'Grandchild',
-  'Aunt/Uncle', 'Cousin', 'In-Law', 'Relative', 'House Helper', 'Boarder', 'Non-Relative', 'None', 'Others'
+  'Aunt/Uncle', 'Cousin', 'In-Law', 'Relative', 'House Helper', 'Boarder', 'Non-Relative', 'None'
 ];
 
 const List<String> constructionMaterialOptions = ['Strong Materials', 'Light Materials', 'Mixed Materials'];
@@ -45,7 +45,7 @@ const List<String> sourceOfWaterOptions = [
 
 const List<String> electricityOptions = ['Yes', 'No'];
 
-const List<String> hhWithOptions = ['Vegetable Garden', 'Poultry', 'Livestock', 'Fishpond', 'None', 'Others'];
+const List<String> hhWithOptions = ['Vegetable Garden', 'Poultry', 'Livestock', 'Fishpond', 'None'];
 
 const List<String> familyIncomeOptions = ['₱5,000 (Below)', '₱6,000 - ₱10,000', '₱11,000 - ₱15,000', '₱16,000 - ₱20,000', '₱21,000 - ₱25,000', '₱26,000 - above'];
 

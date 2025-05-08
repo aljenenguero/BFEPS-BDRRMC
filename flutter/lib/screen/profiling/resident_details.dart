@@ -41,26 +41,26 @@ class ResidentsFormState extends State<ResidentsForm> {
   void initState() {
     super.initState();
     profileController = TextEditingController(text: widget.residentData['profilepicture']);
-    fnameController = TextEditingController(text: widget.residentData['fname']);
-    mnameController = TextEditingController(text: widget.residentData['mname'] ?? 'N/A');
-    lnameController = TextEditingController(text: widget.residentData['lname']);
+    fnameController = TextEditingController(text: widget.residentData['first_name']);
+    mnameController = TextEditingController(text: widget.residentData['middle_name'] ?? 'N/A');
+    lnameController = TextEditingController(text: widget.residentData['last_name']);
     suffixController = TextEditingController(text: widget.residentData['suffix'] ?? 'N/A');
     aliasController = TextEditingController(text: widget.residentData['alias'] ?? 'N/A');
-    hhzoneController = TextEditingController(text: widget.residentData['hhzone']);
-    hhstreetController = TextEditingController(text: widget.residentData['hhstreet']);
-    lotController = TextEditingController(text: widget.residentData['lot'] ?? 'N/A');
-    cnumberController = TextEditingController(text: widget.residentData['cnumber']);
-    dbirthController = TextEditingController(text: widget.residentData['dbirth']);
+    hhzoneController = TextEditingController(text: widget.residentData['household_zone']);
+    hhstreetController = TextEditingController(text: widget.residentData['household_street']);
+    lotController = TextEditingController(text: widget.residentData['household_lot'] ?? 'N/A');
+    cnumberController = TextEditingController(text: widget.residentData['contact_number']);
+    dbirthController = TextEditingController(text: widget.residentData['birth_date']);
     ageController = TextEditingController(text: widget.residentData['age'].toString());
     genderController = TextEditingController(text: widget.residentData['gender']);
-    cstatusController = TextEditingController(text: widget.residentData['cstatus']);
+    cstatusController = TextEditingController(text: widget.residentData['civil_status']);
     religionController = TextEditingController(text: widget.residentData['religion']);
     educationController = TextEditingController(text: widget.residentData['education']);
     occupationController = TextEditingController(text: widget.residentData['occupation']);
     beneficiaryController = TextEditingController(text: widget.residentData['beneficiary']);
     pregnantController = TextEditingController(text: widget.residentData['pregnant']);
     disabilityController = TextEditingController(text: widget.residentData['disability']);
-    hhtypeController = TextEditingController(text: widget.residentData['hhtype']);
+    hhtypeController = TextEditingController(text: widget.residentData['household_type']);
   }
 
   Widget _buildRow(List<Widget> children) {
@@ -306,27 +306,27 @@ class ResidentsFormState extends State<ResidentsForm> {
   void _saveData() {
     // Prepare the data to be saved
     Map<String, dynamic> data = {
-      'profilepicture': profileController.text,
-      'fname': fnameController.text,
-      'mname': mnameController.text,
-      'lname': lnameController.text,
+      'profile_picture': profileController.text,
+      'first_name': fnameController.text,
+      'middle_name': mnameController.text,
+      'last_name': lnameController.text,
       'suffix': suffixController.text,
       'alias': aliasController.text,
-      'hhzone': hhzoneController.text,
-      'hhstreet': hhstreetController.text,
-      'lot': lotController.text,
-      'cnumber': cnumberController.text,
-      'dbirth': dbirthController.text,
+      'household_zone': hhzoneController.text,
+      'household_street': hhstreetController.text,
+      'household_lot': lotController.text,
+      'contact_number': cnumberController.text,
+      'birth_date': dbirthController.text,
       'age': ageController.text,
       'gender': genderController.text,
-      'cstatus': cstatusController.text,
+      'civil_status': cstatusController.text,
       'religion': religionController.text,
       'education': educationController.text,
       'occupation': occupationController.text,
       'beneficiary': beneficiaryController.text,
       'pregnant': pregnantController.text,
       'disability': disabilityController.text,
-      'hhtype': hhtypeController.text,
+      'household_type': hhtypeController.text,
     };
 
     // Print the data being saved for debugging

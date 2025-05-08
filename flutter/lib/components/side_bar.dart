@@ -127,7 +127,7 @@ class SideBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   GestureDetector(
-                    onTap: () => onMenuSelect('Flood Risk Reports', FloodRiskReports()),
+                    onTap: () => onMenuSelect('Flood Risk Reports', FloodRiskReports(onMenuSelect: onMenuSelect)),
                     child: Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: Text(

@@ -22,6 +22,9 @@ class HouseholdPage extends StatefulWidget {
 }
 
 class HouseholdPageState extends State<HouseholdPage> {
+
+  bool _isSortedAscending = true; // Track sorting order
+
   int _currentPage = 0;
   final int _itemsPerPage = 15;
   List<Map<String, dynamic>> _allRecords = [];
@@ -35,19 +38,22 @@ class HouseholdPageState extends State<HouseholdPage> {
 
   Future<void> _fetchRecords() async {
     try {
-        final url = Uri.parse('http://localhost/BFEPS-BDRRMC/api/profiling/get_hhdata.php');
-        final response = await http.get(url);
+      final url = Uri.parse('http://localhost/BFEPS-BDRRMC/api/profiling/get_hhdata.php');
+      final response = await http.get(url);
 
-        if (response.statusCode == 200) {
-            List<dynamic> data = json.decode(response.body);
-            setState(() {
-                _allRecords = List<Map<String, dynamic>>.from(data);
-            });
-        } else {
-            throw Exception('Failed to load records');
-        }
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        print('Fetched data: $data'); // Debug print
+        setState(() {
+          _allRecords = List<Map<String, dynamic>>.from(data);
+          // Sort records by household_id in descending order (newest first)
+          _allRecords.sort((a, b) => b['household_id'].compareTo(a['household_id']));
+        });
+      } else {
+        throw Exception('Failed to load records');
+      }
     } catch (e) {
-        print('Error fetching records: $e');
+      print('Error fetching records: $e');
     }
   }
   
@@ -89,19 +95,19 @@ class HouseholdPageState extends State<HouseholdPage> {
 
     List<Map<String, dynamic>> filteredRecords = _allRecords.where((record) {
         // Normalize full name (remove commas)
-        String fullName = "${record['residents'][0]['lname']} ${record['residents'][0]['fname']} ${record['residents'][0]['mname'] ?? ''} ${record['residents'][0]['suffix'] ?? ''}"
+        String fullName = "${record['residents'][0]['last_name']} ${record['residents'][0]['first_name']} ${record['residents'][0]['middle_name'] ?? ''} ${record['residents'][0]['suffix'] ?? ''}"
             .replaceAll(',', '') // Remove hardcoded commas
             .trim()
             .toLowerCase();
 
         // Normalize address (remove commas)
-        String address = "${record['hhstreet']} ${record['hhzone']} ${record['lot'] ?? ''}"
+        String address = "${record['household_street']} ${record['household_zone']} ${record['household_lot'] ?? ''}"
             .replaceAll(',', '') // Remove hardcoded commas
             .trim()
             .toLowerCase();
 
         // Normalize contact number and age
-        String contact = record['residents'][0]['cnumber'].toString().trim();
+        String contact = record['residents'][0]['contact_number'].toString().trim();
         String age = record['residents'][0]['age'].toString().trim();
 
         // Check if any of the fields match the search query
@@ -131,12 +137,12 @@ class HouseholdPageState extends State<HouseholdPage> {
   void _goToNextPage() {
     int totalFilteredRecords = _allRecords
         .where((record) =>
-            record['lname'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['fname'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['cnumber'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['hhstreet'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['hhzone'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            record['lot'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['last_name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['first_name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['contact_number'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['household_street'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['household_zone'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            record['household_lot'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
             record['age'].toString().toLowerCase().contains(_searchQuery.toLowerCase()))
         .length;
 
@@ -273,6 +279,17 @@ class HouseholdPageState extends State<HouseholdPage> {
     );
   }
 
+  void _toggleSortByLastName() {
+    setState(() {
+      _isSortedAscending = !_isSortedAscending; // Toggle sorting order
+      _allRecords.sort((a, b) {
+        String lastNameA = a['residents'][0]['last_name'].toLowerCase();
+        String lastNameB = b['residents'][0]['last_name'].toLowerCase();
+        return _isSortedAscending ? lastNameA.compareTo(lastNameB) : lastNameB.compareTo(lastNameA);
+      });
+    });
+  }
+
   Widget _buildTableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
@@ -283,7 +300,38 @@ class HouseholdPageState extends State<HouseholdPage> {
       ),
       child: Row(
         children: [
-          const HeaderCellWidget(label: 'Household Head', flex: 3),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8), 
+              child: Row(
+                children: [
+                  const Text(
+                    'Household Head',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
+                      color: Color(0xFF4B4B4B),
+                    ),
+                  ),
+                  const SizedBox(width: 4), 
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(50),
+                      onTap: _toggleSortByLastName,
+                      child: Icon(
+                        _isSortedAscending ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
+                        size: 20, 
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const HeaderCellWidget(label: 'Address', flex: 4),
           const HeaderCellWidget(label: 'Age', flex: 1, center: true),
           const HeaderCellWidget(label: 'Gender', flex: 2, center: true),
@@ -307,16 +355,16 @@ class HouseholdPageState extends State<HouseholdPage> {
         final record = paginatedRecords[index];
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
+          decoration: const BoxDecoration(  
             border: Border(bottom: BorderSide(color: Color(0xFFCCCCCC))),
           ),
           child: Row(
             children: [
-              DataCellWidget(value: '${record['residents'][0]['lname']}, ${record['residents'][0]['fname']} ${record['residents'][0]['mname'] ?? ''} ${record['residents'][0]['suffix'] ?? ''}', flex: 3),
-              DataCellWidget(value: '${record['hhstreet']}, ${record['hhzone']}, ${record['lot'] ?? ''} Barangay Buenavista', flex: 4),
+              DataCellWidget(value: '${record['residents'][0]['last_name']}, ${record['residents'][0]['first_name']} ${record['residents'][0]['middle_name'] ?? ''} ${record['residents'][0]['suffix'] ?? ''}', flex: 3),
+              DataCellWidget(value: '${record['household_street']}, ${record['household_zone']}, ${record['household_lot'] ?? ''} Barangay Buenavista', flex: 4),
               DataCellWidget(value: '${record['residents'][0]['age']}', flex: 1, center: true),
               DataCellWidget(value: '${record['residents'][0]['gender']}', flex: 2, center: true),
-              DataCellWidget(value: '${record['residents'][0]['cnumber']}', flex: 2, center: true),
+              DataCellWidget(value: '${record['residents'][0]['contact_number']}', flex: 2, center: true),
               DataCellWidget(value: record['PregnantCount'] ?? '0', flex: 1, center: true),
               DataCellWidget(value: record['PWDCount'] ?? '0', flex: 1, center: true),
               DataCellWidget(value: record['SeniorCount'] ?? '0', flex: 1, center: true),
@@ -401,22 +449,22 @@ class HouseholdFormState extends State<HouseholdForm> {
   bool _isDirty = false; // Track if the form is dirty
 
   final Map<String, TextEditingController> controllers = {
-    'profilepicture': TextEditingController(),
-    'fname': TextEditingController(),
-    'mname': TextEditingController(),
-    'lname': TextEditingController(),
+    'profile_picture': TextEditingController(),
+    'first_name': TextEditingController(),
+    'middle_name': TextEditingController(),
+    'last_name': TextEditingController(),
     'suffix': TextEditingController(),
     'alias': TextEditingController(),
-    'hhstreet': TextEditingController(),
-    'lot': TextEditingController(),
-    'cnumber': TextEditingController(),
-    'dbirth': TextEditingController(),
+    'household_street': TextEditingController(),
+    'household_lot': TextEditingController(),
+    'contact_number': TextEditingController(),
+    'birth_date': TextEditingController(),
     'age': TextEditingController(),
   };
 
   final Map<String, String?> dropdownValues = {
-    'hhzone': null,
-    'cstatus': null,
+    'household_zone': null,
+    'civil_status': null,
     'religion': null,
     'gender': null,
     'education': null,
@@ -424,14 +472,14 @@ class HouseholdFormState extends State<HouseholdForm> {
     'beneficiary': null,  
     'pregnant': null,
     'disability': null,
-    'hhtype': null,
-    'materialused': null,
-    'toiletfacility': null,
-    'meansofcommunication': null,
-    'sourceofwater': null,
+    'household_type': null,
+    'material_used': null,
+    'toilet_facility': null,
+    'means_of_communication': null,
+    'source_of_water': null,
     'electricity': null,
-    'hhwith': null,
-    'familyincome': null,
+    'household_with': null,
+    'family_income': null,
   };
   
   @override
@@ -444,7 +492,7 @@ class HouseholdFormState extends State<HouseholdForm> {
 
       // Loop through residents to find the household head
         for (var member in widget.existingData!['residents']) {
-        if (member['hhtype'] == 'Head of the Household') {
+        if (member['household_type'] == 'Head of the Household') {
             householdHead = member; // Store household head
         } else {
             members.add(member); // Store other members
@@ -453,21 +501,21 @@ class HouseholdFormState extends State<HouseholdForm> {
 
       // Populate the fields with household head data if available
       if (householdHead != null) {
-          controllers['profilepicture']!.text = householdHead['profilepicture'] ?? '';
-          controllers['fname']!.text = householdHead['fname'] ?? '';
-          controllers['mname']!.text = householdHead['mname'] ?? '';
-          controllers['lname']!.text = householdHead['lname'] ?? '';
+          controllers['profile_picture']!.text = householdHead['profile_picture'] ?? '';
+          controllers['first_name']!.text = householdHead['first_name'] ?? '';
+          controllers['middle_name']!.text = householdHead['middle_name'] ?? '';
+          controllers['last_name']!.text = householdHead['last_name'] ?? '';
           controllers['suffix']!.text = householdHead['suffix'] ?? '';
           controllers['alias']!.text = householdHead['alias'] ?? '';
-          controllers['hhstreet']!.text = widget.existingData!['hhstreet'] ?? '';
-          controllers['lot']!.text = widget.existingData!['lot'] ?? '';
-          controllers['cnumber']!.text = householdHead['cnumber'] ?? '';
-          controllers['dbirth']!.text = householdHead['dbirth'] ?? '';
+          controllers['household_street']!.text = widget.existingData!['household_street'] ?? '';
+          controllers['household_lot']!.text = widget.existingData!['household_lot'] ?? '';
+          controllers['contact_number']!.text = householdHead['contact_number'] ?? '';
+          controllers['birth_date']!.text = householdHead['birth_date'] ?? '';
           controllers['age']!.text = householdHead['age'] ?? '';
 
           // Populate dropdown values for household head
-          dropdownValues['hhzone'] = widget.existingData!['hhzone'] as String?;
-          dropdownValues['cstatus'] = householdHead['cstatus'] as String?;
+          dropdownValues['household_zone'] = widget.existingData!['household_zone'] as String?;
+          dropdownValues['civil_status'] = householdHead['civil_status'] as String?;
           dropdownValues['religion'] = householdHead['religion'] as String?;
           dropdownValues['gender'] = householdHead['gender'] as String?;
           dropdownValues['education'] = householdHead['education'] as String?;
@@ -475,14 +523,14 @@ class HouseholdFormState extends State<HouseholdForm> {
           dropdownValues['beneficiary'] = householdHead['beneficiary'] as String?;
           dropdownValues['pregnant'] = householdHead['pregnant'] as String?;
           dropdownValues['disability'] = householdHead['disability'] as String?;
-          dropdownValues['hhtype'] = householdHead['hhtype'] as String?;
-          dropdownValues['materialused'] = widget.existingData!['materialused'] as String?;
-          dropdownValues['toiletfacility'] = widget.existingData!['toiletfacility'] as String?;
-          dropdownValues['meansofcommunication'] = widget.existingData!['meansofcommunication'] as String?;
-          dropdownValues['sourceofwater'] = widget.existingData!['sourceofwater'] as String?;
+          dropdownValues['household_type'] = householdHead['household_type'] as String?;
+          dropdownValues['material_used'] = widget.existingData!['material_used'] as String?;
+          dropdownValues['toilet_facility'] = widget.existingData!['toilet_facility'] as String?;
+          dropdownValues['means_of_communication'] = widget.existingData!['means_of_communication'] as String?;
+          dropdownValues['source_of_water'] = widget.existingData!['source_of_water'] as String?;
           dropdownValues['electricity'] = widget.existingData!['electricity'] as String?;
-          dropdownValues['hhwith'] = widget.existingData!['hhwith'] as String?;
-          dropdownValues['familyincome'] = widget.existingData!['familyincome'] as String?;
+          dropdownValues['household_with'] = widget.existingData!['household_with'] as String?;
+          dropdownValues['family_income'] = widget.existingData!['family_income'] as String?;
       }
 
       // Populate household members if available
@@ -490,18 +538,18 @@ class HouseholdFormState extends State<HouseholdForm> {
         householdMembers.add({
           'resident_id': member['resident_id'], 
           'controllers': {
-            'profilepicture': TextEditingController(text: member['profilepicture'] ?? ''),
-            'fname': TextEditingController(text: member['fname'] ?? ''),
-            'mname': TextEditingController(text: member['mname'] ?? ''),
-            'lname': TextEditingController(text: member['lname'] ?? ''),
+            'profile_picture': TextEditingController(text: member['profile_picture'] ?? ''),
+            'first_name': TextEditingController(text: member['first_name'] ?? ''),
+            'middle_name': TextEditingController(text: member['middle_name'] ?? ''),
+            'last_name': TextEditingController(text: member['last_name'] ?? ''),
             'suffix': TextEditingController(text: member['suffix'] ?? ''),
             'alias': TextEditingController(text: member['alias'] ?? ''),
-            'cnumber': TextEditingController(text: member['cnumber'] ?? ''),
-            'dbirth': TextEditingController(text: member['dbirth'] ?? ''),
+            'contact_number': TextEditingController(text: member['contact_number'] ?? ''),
+            'birth_date': TextEditingController(text: member['birth_date'] ?? ''),
             'age': TextEditingController(text: member['age'] ?? ''),
           },
           'dropdownValues': {
-            'cstatus': member['cstatus'] as String?,
+            'civil_status': member['civil_status'] as String?,
             'religion': member['religion'] as String?,
             'gender': member['gender'] as String?,
             'education': member['education'] as String?,
@@ -509,7 +557,7 @@ class HouseholdFormState extends State<HouseholdForm> {
             'beneficiary': member['beneficiary'] as String?,
             'pregnant': member['pregnant'] as String?,
             'disability': member['disability'] as String?,
-            'hhtype': member['hhtype'] as String?,
+            'household_type': member['household_type'] as String?,
           },
         });
       }
@@ -526,19 +574,19 @@ class HouseholdFormState extends State<HouseholdForm> {
       householdMembers.add({
         'resident_id': tempId, // Assign the temporary ID
         'controllers': {
-          'profilepicture': TextEditingController(),
-          'fname': TextEditingController(),
-          'mname': TextEditingController(),
-          'lname': TextEditingController(),
+          'profile_picture': TextEditingController(),
+          'first_name': TextEditingController(),
+          'middle_name': TextEditingController(),
+          'last_name': TextEditingController(),
           'suffix': TextEditingController(),
           'alias': TextEditingController(),
-          'cnumber': TextEditingController(),
-          'dbirth': TextEditingController(),
+          'contact_number': TextEditingController(),
+          'birth_date': TextEditingController(),
           'age': TextEditingController(),
         },
         'dropdownValues': {
-          'hhzone': '',
-          'cstatus': '',
+          'household_zone': '',
+          'civil_status': '',
           'religion': '',
           'gender': '',
           'education': '',
@@ -546,7 +594,7 @@ class HouseholdFormState extends State<HouseholdForm> {
           'beneficiary': '',
           'pregnant': '',
           'disability': '',
-          'hhtype': '',
+          'household_type': '',
         },
       });
     });
@@ -632,28 +680,34 @@ class HouseholdFormState extends State<HouseholdForm> {
   }
 
   Future<String?> _uploadImage({File? file, Uint8List? webBytes, required String fileName}) async {
-
     var request = http.MultipartRequest('POST', Uri.parse('http://localhost/BFEPS-BDRRMC/api/profiling/upload_image.php'));
 
     if (kIsWeb && webBytes != null) {
-      request.files.add(http.MultipartFile.fromBytes('profilepicture', webBytes, filename: fileName));
+        request.files.add(http.MultipartFile.fromBytes('profile_picture', webBytes, filename: fileName));
     } else if (file != null) {
-      request.files.add(await http.MultipartFile.fromPath('profilepicture', file.path));
+        request.files.add(await http.MultipartFile.fromPath('profile_picture', file.path));
     }
 
-    var response = await request.send();
-    if (response.statusCode == 200) {
-      var responseData = await response.stream.bytesToString();
-      var jsonData = json.decode(responseData);
+    try {
+        var response = await request.send();
+        if (response.statusCode == 200) {
+            var responseData = await response.stream.bytesToString();
+            var jsonData = json.decode(responseData);
 
-      if (jsonData is Map<String, dynamic> && jsonData['success'] == true) {
-        print("Image uploaded successfully: ${jsonData['filepath']}"); // Log success
-
-        return jsonData['filepath']; 
-      }
+            if (jsonData is Map<String, dynamic> && jsonData['success'] == true) {
+                print("Image uploaded successfully: ${jsonData['filepath']}");
+                return jsonData['filepath'];
+            } else {
+                print("Image upload failed: ${jsonData['error']}");
+            }
+        } else {
+            print("Server error: ${response.statusCode}");
+        }
+    } catch (e) {
+        print("Error uploading image: $e");
     }
     return null;
-  }
+}
 
   Widget _buildProfilePictureSection(TextEditingController profilePictureController) {
     String imageUrl = profilePictureController.text.trim();
@@ -702,7 +756,20 @@ class HouseholdFormState extends State<HouseholdForm> {
     );
   }
 
-  
+  //Method to calculate age from the date of birth
+  int _calculateAge(String birthDate) {
+    DateTime birthDateTime = DateTime.parse(birthDate);
+    DateTime today = DateTime.now();
+    int age = today.year - birthDateTime.year;
+
+    // Check if the birthday has occurred this year
+    if (today.month < birthDateTime.month || (today.month == birthDateTime.month && today.day < birthDateTime.day)) {
+      age--;
+    }
+    return age;
+  }
+
+  // Update the _buildProfileSection method
   Widget _buildProfileSection(Map<String, TextEditingController> controllers, Map<String, String?> dropdownValues, {VoidCallback? onDelete, bool isHouseholdHead = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -710,50 +777,92 @@ class HouseholdFormState extends State<HouseholdForm> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildProfilePictureSection(controllers['profilepicture']!),
+            _buildProfilePictureSection(controllers['profile_picture']!),
             Expanded(
               child: Column(
                 children: [
                   _buildRow([
-                    FormHelper.buildTextField('Firstname*', controllers['fname']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-                    FormHelper.buildTextField('Middlename', controllers['mname']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-                    FormHelper.buildTextField('Lastname*', controllers['lname']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+                    FormHelper.buildTextField('Firstname*', controllers['first_name']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+                    FormHelper.buildTextField('Middlename', controllers['middle_name']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+                    FormHelper.buildTextField('Lastname*', controllers['last_name']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
                     FormHelper.buildTextField('Suffix', controllers['suffix']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
                     FormHelper.buildTextField('Alias', controllers['alias']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
                   ]),
                   const SizedBox(height: 10),
                   if (isHouseholdHead) ...[
                     _buildRow([
-                      FormHelper.buildTextField('Street*', controllers['hhstreet']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-                      _buildDropdown('Zone*', 'hhzone', zoneOptions, dropdownValues, isReadOnly: widget.isViewMode),
-                      FormHelper.buildTextField('Lot No*', controllers['lot']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-                      FormHelper.buildTextField('Contact Number', controllers['cnumber']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+                      FormHelper.buildTextField('Street*', controllers['household_street']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+                      FormHelper.buildDropdown('Zone*', 'household_zone', zoneOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
+                      FormHelper.buildTextField('Lot No.*', controllers['household_lot']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+                      FormHelper.buildTextField('Contact Number', controllers['contact_number']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
                     ]),
                   ] else ...[
-                    FormHelper.buildTextField('Contact Number', controllers['cnumber']!, isReadOnly: widget.isViewMode,  onChanged: _markDirty),
+                    FormHelper.buildTextField('Contact Number', controllers['contact_number']!, isReadOnly: widget.isViewMode,  onChanged: _markDirty),
                   ],
                   const SizedBox(height: 10),
                   _buildRow([
-                    FormHelper.buildDateField(context, controllers['dbirth']!, 'Date of Birth*', isReadOnly: widget.isViewMode, isDateTime: false, onChanged: _markDirty),
-                    FormHelper.buildTextField('Age*', controllers['age']!, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-                    _buildDropdown('Gender*', 'gender', genderOptions, dropdownValues, isReadOnly: widget.isViewMode),
+                    FormHelper.buildDateField(
+                      context,
+                      controllers['birth_date']!,
+                      'Date of Birth*',
+                      isReadOnly: widget.isViewMode,
+                      isDateTime: false,
+                      onChanged: (value) {
+                        // Calculate age when date of birth is selected
+                        if (value.isNotEmpty) {
+                          int age = _calculateAge(value);
+                          controllers['age']!.text = age.toString(); // Update the age text field
+                        }
+                        _markDirty(value); // Mark the form as dirty
+                      },
+                    ),
+                    FormHelper.buildTextField('Age*', controllers['age']!, isReadOnly: true, onChanged: _markDirty), // Make age field read-only
+                    FormHelper.buildDropdown('Gender*', 'gender', genderOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: (value) {
+                      // Check if the selected gender is male or transwoman
+                      if (value == 'Male' || value == 'Transwoman') {
+                        setState(() {
+                          dropdownValues['pregnant'] = 'No'; // Set pregnant field to 'No'
+                        });
+                      } else {
+                        setState(() {
+                          dropdownValues['pregnant'] = null; // Reset pregnant field for other genders
+                        });
+                      }
+                      _markDirty(value); 
+                    }),
                   ]),
                   const SizedBox(height: 10),
                   _buildRow([
-                    _buildDropdown('Civil Status*', 'cstatus', civilStatusOptions, dropdownValues, isReadOnly: widget.isViewMode),
-                    _buildDropdown('Religion*', 'religion', religionOptions, dropdownValues, isReadOnly: widget.isViewMode),
+                    FormHelper.buildDropdown('Civil Status*', 'civil_status', civilStatusOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+                    FormHelper.buildDropdown('Religion*', 'religion', religionOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty),
                   ]),
                   const SizedBox(height: 10),
                   _buildRow([
-                    _buildDropdown('Education Attainment*', 'education', educationOptions, dropdownValues, isReadOnly: widget.isViewMode),
-                    _buildDropdown('Occupation*', 'occupation', occupationOptions, dropdownValues, isReadOnly: widget.isViewMode),
-                    _buildDropdown("4p's Beneficiary*", 'beneficiary', beneficiaryOptions, dropdownValues, isReadOnly: widget.isViewMode),
+                    FormHelper.buildDropdown('Education Attainment*', 'education', educationOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
+                    FormHelper.buildDropdown('Occupation*', 'occupation', occupationOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: true),
+                    FormHelper.buildDropdown("4p's Beneficiary*", 'beneficiary', beneficiaryOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
                   ]),
                   const SizedBox(height: 10),
                   _buildRow([
-                    _buildDropdown('Pregnant*', 'pregnant', pregnantOptions, dropdownValues, isReadOnly: widget.isViewMode),
-                    _buildDropdown('Disability*', 'disability', disabilityOptions, dropdownValues, isReadOnly: widget.isViewMode),
-                    _buildDropdown('Household Member Type*', 'hhtype', householdMemberTypeOptions, dropdownValues, isReadOnly: widget.isViewMode),
+                    FormHelper.buildDropdown('Pregnant*', 'pregnant', pregnantOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: (value) {
+                      if (value == 'Yes') {
+                        // Store the date of birth when pregnant is selected
+                        DateTime birthDate = DateTime.parse(controllers['birth_date']!.text);
+                        DateTime nineMonthsLater = DateTime(birthDate.year, birthDate.month + 9, birthDate.day);
+                        if (DateTime.now().isAfter(nineMonthsLater)) {
+                          setState(() {
+                            dropdownValues['pregnant'] = 'No'; // Automatically set to 'No' if 9 months have passed
+                          });
+                        }
+                      } else {
+                        setState(() {
+                          dropdownValues['pregnant'] = value; // Update the pregnant status
+                        });
+                      }
+                      _markDirty(value);
+                    }),
+                    FormHelper.buildDropdown('Disability*', 'disability', disabilityOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: true),
+                    FormHelper.buildDropdown('Household Member Type*', 'household_type', householdMemberTypeOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
                   ]),
                 ],
               ),
@@ -854,16 +963,16 @@ class HouseholdFormState extends State<HouseholdForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildRow([
-          _buildDropdown('Construction Materials Used*', 'materialused', constructionMaterialOptions, dropdownValues, isReadOnly: widget.isViewMode),
-          _buildDropdown('Toilet Facility*', 'toiletfacility', toiletFacilityOptions, dropdownValues, isReadOnly: widget.isViewMode),
-          _buildDropdown('Means of Communication*', 'meansofcommunication', meansOfCommunicationOptions, dropdownValues, isReadOnly: widget.isViewMode),
-          _buildDropdown('Source of Water*', 'sourceofwater', sourceOfWaterOptions, dropdownValues, isReadOnly: widget.isViewMode),
+          FormHelper.buildDropdown('Construction Materials Used*', 'material_used', constructionMaterialOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false ),
+          FormHelper.buildDropdown('Toilet Facility*', 'toilet_facility', toiletFacilityOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
+          FormHelper.buildDropdown('Means of Communication*', 'means_of_communication', meansOfCommunicationOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
+          FormHelper.buildDropdown('Source of Water*', 'source_of_water', sourceOfWaterOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty),
         ]),
         const SizedBox(height: 10),
         _buildRow([
-          _buildDropdown('Electricity*', 'electricity', electricityOptions, dropdownValues, isReadOnly: widget.isViewMode),
-          _buildDropdown('HH with..*', 'hhwith', hhWithOptions, dropdownValues, isReadOnly: widget.isViewMode),
-          _buildDropdown('Family Income*', 'familyincome', familyIncomeOptions, dropdownValues, isReadOnly: widget.isViewMode),
+          FormHelper.buildDropdown('Electricity*', 'electricity', electricityOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
+          FormHelper.buildDropdown('HH with..*', 'household_with', hhWithOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
+          FormHelper.buildDropdown('Family Income*', 'family_income', familyIncomeOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
         ]),
         const SizedBox(height: 10),
         if (widget.existingData != null)
@@ -932,40 +1041,6 @@ class HouseholdFormState extends State<HouseholdForm> {
     );
   }
 
-  Widget _buildDropdown(String label, String key, List<String> options, Map<String, String?> dropdownValues, {bool isReadOnly = false}) {
-    return SizedBox(
-      height: 35,
-      child: DropdownButtonFormField<String>(
-        decoration: FormHelper.inputDecoration(label), 
-        dropdownColor: Colors.white,
-        value: dropdownValues[key] != null && options.contains(dropdownValues[key]) ? dropdownValues[key] : null,
-        items: options.map((value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14,
-                color: Colors.black,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          );
-        }).toList(),
-        menuMaxHeight: 200.0,
-        isDense: true,
-        onChanged: isReadOnly ? null :  (newValue) {
-          setState(() {
-            dropdownValues[key] = newValue ?? ''; 
-            print("Updated $key to $newValue, dropdownValues: $dropdownValues");
-            _isDirty = true; // Mark as dirty
-          });
-        },
-      ),
-    );
-  }
-
   Widget _buildRow(List<Widget> children) {
     return Row(
       children: children
@@ -986,16 +1061,16 @@ class HouseholdFormState extends State<HouseholdForm> {
   
   Future<void> _saveData(BuildContext context) async {
     // Required fields for validation
-    List<String> requiredControllers = ['fname', 'lname', 'dbirth', 'age'];
+    List<String> requiredControllers = ['first_name', 'last_name', 'birth_date', 'age'];
     List<String> requiredDropdowns = [
-        'cstatus', 'religion', 'gender', 'education', 
+        'civil_status', 'religion', 'gender', 'education', 
         'occupation', 'beneficiary', 'pregnant', 
-        'disability', 'hhtype'
+        'disability', 'household_type'
     ];
     List<String> requiredHouseholdFields = [
-        'hhstreet', 'hhzone', 'lot', 'materialused', 
-        'toiletfacility', 'meansofcommunication', 
-        'sourceofwater', 'electricity', 'hhwith', 'familyincome'
+        'household_street', 'household_zone', 'household_lot', 'material_used', 
+        'toilet_facility', 'means_of_communication', 
+        'source_of_water', 'electricity', 'household_with', 'family_income'
     ];
 
     bool hasError = false;
@@ -1056,30 +1131,30 @@ class HouseholdFormState extends State<HouseholdForm> {
     // Prepare the data for saving
     var data = {
       'household_id': widget.existingData?['household_id'], 
-      'hhstreet': toCamelCase(controllers['hhstreet']!.text),
-      'hhzone': dropdownValues['hhzone'],
-      'lot': controllers['lot']!.text,
-      'materialused': dropdownValues['materialused'],
-      'toiletfacility': dropdownValues['toiletfacility'],
-      'meansofcommunication': dropdownValues['meansofcommunication'],
-      'sourceofwater': dropdownValues['sourceofwater'],
+      'household_street': toCamelCase(controllers['household_street']!.text),
+      'household_zone': dropdownValues['household_zone'],
+      'household_lot': controllers['household_lot']!.text,
+      'material_used': dropdownValues['material_used'],
+      'toilet_facility': dropdownValues['toilet_facility'],
+      'means_of_communication': dropdownValues['means_of_communication'],
+      'source_of_water': dropdownValues['source_of_water'],
       'electricity': dropdownValues['electricity'],
-      'hhwith': dropdownValues['hhwith'],
-      'familyincome': dropdownValues['familyincome'],
+      'household_with': dropdownValues['household_with'],
+      'family_income': dropdownValues['family_income'],
       'residents': [
         // Household head
         {
           'id': widget.existingData?['residents'][0]['resident_id'], 
-          'profilepicture': controllers['profilepicture']!.text,
-          'fname': toCamelCase(controllers['fname']!.text),
-          'mname': toCamelCase(controllers['mname']!.text),
-          'lname': toCamelCase(controllers['lname']!.text),
+          'profile_picture': controllers['profile_picture']!.text,
+          'first_name': toCamelCase(controllers['first_name']!.text),
+          'middle_name': toCamelCase(controllers['middle_name']!.text),
+          'last_name': toCamelCase(controllers['last_name']!.text),
           'suffix': toCamelCase(controllers['suffix']!.text),
           'alias': toCamelCase(controllers['alias']!.text),
-          'cnumber': controllers['cnumber']!.text,
-          'cstatus': dropdownValues['cstatus'],
+          'contact_number': controllers['contact_number']!.text,
+          'civil_status': dropdownValues['civil_status'],
           'religion': dropdownValues['religion'],
-          'dbirth': controllers['dbirth']!.text,
+          'birth_date': controllers['birth_date']!.text,
           'age': controllers['age']!.text, 
           'gender': dropdownValues['gender'],
           'education': dropdownValues['education'],
@@ -1087,22 +1162,22 @@ class HouseholdFormState extends State<HouseholdForm> {
           'beneficiary': dropdownValues['beneficiary'],
           'pregnant': dropdownValues['pregnant'],
           'disability': dropdownValues['disability'],
-          'hhtype': dropdownValues['hhtype'],
+          'household_type': dropdownValues['household_type'],
         },
         // Household Members
         ...householdMembers.map((member) {    
             return {
               'id': member['resident_id'], // Ensure resident_id is included for each member
-              'profilepicture': member['controllers']['profilepicture']!.text,
-              'fname': toCamelCase(member['controllers']['fname']!.text),
-              'mname': toCamelCase(member['controllers']['mname']!.text),
-              'lname': toCamelCase(member['controllers']['lname']!.text),
+              'profile_picture': member['controllers']['profile_picture']!.text,
+              'first_name': toCamelCase(member['controllers']['first_name']!.text),
+              'middle_name': toCamelCase(member['controllers']['middle_name']!.text),
+              'last_name': toCamelCase(member['controllers']['last_name']!.text),
               'suffix': toCamelCase(member['controllers']['suffix']!.text),
               'alias': toCamelCase(member['controllers']['alias']!.text),
-              'cnumber': member['controllers']['cnumber']!.text,
-              'cstatus': member['dropdownValues']['cstatus'],
+              'contact_number': member['controllers']['contact_number']!.text,
+              'civil_status': member['dropdownValues']['civil_status'],
               'religion': member['dropdownValues']['religion'],
-              'dbirth': member['controllers']['dbirth']!.text,
+              'birth_date': member['controllers']['birth_date']!.text,
               'age': member['controllers']['age']!.text,
               'gender': member['dropdownValues']['gender'],
               'education': member['dropdownValues']['education'],
@@ -1110,7 +1185,7 @@ class HouseholdFormState extends State<HouseholdForm> {
               'beneficiary': member['dropdownValues']['beneficiary'],
               'pregnant': member['dropdownValues']['pregnant'],
               'disability': member['dropdownValues']['disability'],
-              'hhtype': member['dropdownValues']['hhtype'],
+              'household_type': member['dropdownValues']['household_type'],
             };
         }).toList(),
       ]
