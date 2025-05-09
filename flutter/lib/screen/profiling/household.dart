@@ -601,10 +601,10 @@ class HouseholdFormState extends State<HouseholdForm> {
   }
 
   void _markDirty(String value) {
-  setState(() {
-    _isDirty = true;
-  });
-}
+    setState(() {
+      _isDirty = true;
+    });
+  }
 
   void _deleteHouseholdMember(int index) {
     String memberId = householdMembers[index]['resident_id'];
@@ -833,18 +833,18 @@ class HouseholdFormState extends State<HouseholdForm> {
                   ]),
                   const SizedBox(height: 10),
                   _buildRow([
-                    FormHelper.buildDropdown('Civil Status*', 'civil_status', civilStatusOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-                    FormHelper.buildDropdown('Religion*', 'religion', religionOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+                    FormHelper.buildDropdown('Civil Status*', 'civil_status', civilStatusOptions, dropdownValues, isReadOnly: widget.isViewMode, allowCustomInput: true, onChanged: _markDirty),
+                    FormHelper.buildDropdown('Religion*', 'religion', religionOptions, dropdownValues, isReadOnly: widget.isViewMode, allowCustomInput: true, onChanged: _markDirty),
                   ]),
                   const SizedBox(height: 10),
                   _buildRow([
-                    FormHelper.buildDropdown('Education Attainment*', 'education', educationOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
+                    FormHelper.buildDropdown('Education Attainment*', 'education', educationOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: true),
                     FormHelper.buildDropdown('Occupation*', 'occupation', occupationOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: true),
                     FormHelper.buildDropdown("4p's Beneficiary*", 'beneficiary', beneficiaryOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
                   ]),
                   const SizedBox(height: 10),
                   _buildRow([
-                    FormHelper.buildDropdown('Pregnant*', 'pregnant', pregnantOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: (value) {
+                    FormHelper.buildDropdown('Pregnant*', 'pregnant', pregnantOptions, dropdownValues, isReadOnly: widget.isViewMode, allowCustomInput: false, onChanged: (value) {
                       if (value == 'Yes') {
                         // Store the date of birth when pregnant is selected
                         DateTime birthDate = DateTime.parse(controllers['birth_date']!.text);
@@ -862,7 +862,7 @@ class HouseholdFormState extends State<HouseholdForm> {
                       _markDirty(value);
                     }),
                     FormHelper.buildDropdown('Disability*', 'disability', disabilityOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: true),
-                    FormHelper.buildDropdown('Household Member Type*', 'household_type', householdMemberTypeOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: false),
+                    FormHelper.buildDropdown('Household Member Type*', 'household_type', householdMemberTypeOptions, dropdownValues, isReadOnly: widget.isViewMode, onChanged: _markDirty, allowCustomInput: true),
                   ]),
                 ],
               ),

@@ -336,7 +336,11 @@ class IndividualPageState extends State<IndividualPage> {
                           builder: (context) => ResidentsForm(residentData: record, isViewMode: true),
                         );
                       } else if (value == 'Update') {
-                        // add logic
+                         showDialog(
+                        barrierDismissible: false,
+                        context: context,
+                          builder: (context) => ResidentsForm(residentData: record, isViewMode: false),
+                        );
                       } else if (value == 'Delete') {
                         // add logic
                       }
