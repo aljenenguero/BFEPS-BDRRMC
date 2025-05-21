@@ -2,7 +2,7 @@
 include 'db_connect.php';
 
 
-$sql = "SELECT id, report_date, donor_name, item_name, donated_type, measure, quantity, cost, beneficiaries, process, venue, remarks FROM relief_reports";
+$sql = "SELECT id, report_date, donor_name, item_name, donated_type, measure, quantity, cost, beneficiaries, process, venue, remarks, pictures FROM relief_reports";
 
 
 $result = $conn->query($sql);

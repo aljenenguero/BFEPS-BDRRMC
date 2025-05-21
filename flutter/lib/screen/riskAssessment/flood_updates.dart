@@ -349,7 +349,7 @@ class _FloodUpdateFormState extends State<FloodUpdateForm> {
       child: Stack(
         children: [
           Container(
-            padding: const EdgeInsets.all(60.0),
+            padding: const EdgeInsets.all(24.0),
             decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -368,21 +368,8 @@ class _FloodUpdateFormState extends State<FloodUpdateForm> {
                 ),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(22),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey.shade300),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
-                          blurRadius: 5,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+    
+                
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,7 +433,7 @@ class _FloodUpdateFormState extends State<FloodUpdateForm> {
                         ],
                       ),
                     ),
-                  ),
+              
                 ),
               ],
             ),

@@ -1,4 +1,10 @@
 // ignore_for_file: file_names, must_be_immutable, avoid_print
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:dotted_border/dotted_border.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../constants/dropdown_options.dart';
@@ -20,6 +26,7 @@ class ReliefOperationPage extends StatefulWidget {
 }
 
 class ReliefOperationPageState extends State<ReliefOperationPage> {
+
   int _currentPage = 0;
   final int _itemsPerPage = 15;
   List<Map<String, dynamic>> _allRecords = [];
@@ -38,6 +45,7 @@ class ReliefOperationPageState extends State<ReliefOperationPage> {
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
+        print('Fetched data: $data'); // Debug print
         setState(() {
           _allRecords = List<Map<String, dynamic>>.from(data);
           // Sort records by date in descending order
@@ -326,6 +334,7 @@ class ReliefOperationPageState extends State<ReliefOperationPage> {
                         _deleteReport(report['id']);
                       }
                     },
+                    showEvacuationCenter: false, // Set to true or false based on your requirement
                   ),
                 ),
               ),
@@ -358,6 +367,7 @@ class ReliefOperationPageState extends State<ReliefOperationPage> {
                   _allRecords.add(newRecord); // Add new record if existingData is null
                 }
               });
+               _fetchRecords(); // Fetch updated records
             },
             existingData: existingData, 
             isViewMode: isViewMode, 
@@ -395,6 +405,11 @@ class ReliefReportFormState extends State<ReliefReportForm> {
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController costController = TextEditingController();
   final TextEditingController remarksController = TextEditingController();
+  final TextEditingController picturesController = TextEditingController();
+
+
+  List<TextEditingController> picturesControllers = [TextEditingController()];
+
 
   // Existing dropdown variables
   String? selectedType;
@@ -419,20 +434,161 @@ class ReliefReportFormState extends State<ReliefReportForm> {
       selectedProcess = widget.existingData!['process'];
       selectedVenue = widget.existingData!['venue'];
       remarksController.text = widget.existingData!['remarks'] ?? '';
+      picturesController.text = widget.existingData!['pictures'] ?? '';
     }
   }
 
   void _markDirty(String value) {
-  setState(() {
-    _isDirty = true;
-  });
+    setState(() {
+      _isDirty = true;
+    });
+  }
+
+  Future<void> _pickImage(TextEditingController picturesController) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null) {
+      Uint8List? webImage;
+      File? image;
+
+      if (kIsWeb) {
+        webImage = result.files.first.bytes;
+      } else {
+        image = File(result.files.single.path!);
+      }
+      String? imageUrl = await _uploadImage(
+        file: image,
+        webBytes: webImage,
+        fileName: result.files.first.name,
+      );
+      if (imageUrl != null) {
+        setState(() {
+          picturesController.text = imageUrl;  // Set the image URL in the controller
+        });
+      }
+    }
+  }
+
+  Future<String?> _uploadImage({File? file, Uint8List? webBytes, required String fileName}) async {
+    var request = http.MultipartRequest('POST', Uri.parse('http://localhost/BFEPS-BDRRMC/api/profiling/upload_image.php'));
+
+    if (kIsWeb && webBytes != null) {
+        request.files.add(http.MultipartFile.fromBytes('pictures', webBytes, filename: fileName));
+    } else if (file != null) {
+        request.files.add(await http.MultipartFile.fromPath('pictures', file.path));
+    }
+
+    try {
+        var response = await request.send();
+        if (response.statusCode == 200) {
+            var responseData = await response.stream.bytesToString();
+            var jsonData = json.decode(responseData);
+
+            if (jsonData is Map<String, dynamic> && jsonData['success'] == true) {
+                print("Image uploaded successfully: ${jsonData['filepath']}");
+                return jsonData['filepath'];
+            } else {
+                print("Image upload failed: ${jsonData['error']}");
+            }
+        } else {
+            print("Server error: ${response.statusCode}");
+        }
+    } catch (e) {
+        print("Error uploading image: $e");
+    }
+    return null;
+}
+
+Widget _buildPicturesSection() {
+  return Padding(
+    padding: const EdgeInsets.only(right: 20),
+    child: Row(
+      children: [
+        ...picturesControllers.map((controller) {
+          String imageUrl = controller.text.trim();
+          String encodedUrl = Uri.encodeFull(imageUrl);
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    color: Colors.grey[200],
+                    child: imageUrl.isNotEmpty
+                        ? Image.network(
+                            encodedUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              print("Image loading error: $error");
+                              return Container(color: Colors.grey[300]);
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+                if (!widget.isViewMode)
+                  Positioned.fill(
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F1F1),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            imageUrl.isNotEmpty ? Icons.edit : Icons.camera_alt,
+                            color: const Color(0xFF9E9E9E),
+                            size: 25,
+                          ),
+                          onPressed: () async {
+                            await _pickImage(controller);
+                            setState(() {});
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }).toList(),
+
+        if (!widget.isViewMode && picturesControllers.length < 5)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                picturesControllers.add(TextEditingController());
+              });
+            },
+          child: DottedBorder(
+            borderType: BorderType.RRect,
+            radius: const Radius.circular(15),
+            dashPattern: [6, 4], // 6 pixels dash, 4 pixels gap
+            color: Colors.grey,
+            strokeWidth: 1,
+            child: Container(
+              width: 100,
+              height: 100,
+              alignment: Alignment.center,
+              child: const Icon(Icons.add, size: 30, color: Colors.grey),
+            ),
+          ),
+          ),
+      ],
+    ),
+  );
 }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 800,
-      height: 500,
+      height: 620,
       child: Stack(
         children: [
           Container(
@@ -474,43 +630,87 @@ class ReliefReportFormState extends State<ReliefReportForm> {
     );
   }
 
-  Widget _buildForm(Map<String, String?> dropdownValues) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildRow([
-            FormHelper.buildDateField(context, dateController, 'Date*', isReadOnly: widget.isViewMode, isDateTime: false, onChanged: _markDirty),
-          ]),
-          const SizedBox(height: 10),
-          _buildRow([
-            FormHelper.buildTextField('Name of Donor*', nameController, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-            FormHelper.buildTextField('Name of Item*', inameController, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-          ]),
-          const SizedBox(height: 10),
-          _buildRow([
-            _buildDropdown('Kind/Type*', 'selectedType', kindOptions, dropdownValues, isReadOnly: widget.isViewMode),
-            _buildDropdown('Unit Measure*', 'selectedMeasure', unitMeasureOptions, dropdownValues, isReadOnly: widget.isViewMode),
-          ]),
-          const SizedBox(height: 10),
-          _buildRow([
-            FormHelper.buildTextField('Quantity*', quantityController, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-            FormHelper.buildTextField('Total Cost*', costController, isReadOnly: widget.isViewMode, onChanged: _markDirty),
-            _buildDropdown('Beneficiaries*', 'selectedBeneficiaries', beneficiariesOptions, dropdownValues, isReadOnly: widget.isViewMode),
-          ]),
-          const SizedBox(height: 10),
-          _buildRow([
-            _buildDropdown('Distribution Process*', 'selectedProcess', distributionProcessOptions, dropdownValues, isReadOnly: widget.isViewMode),
-            _buildDropdown('Venue*', 'selectedVenue', venueOptions, dropdownValues, isReadOnly: widget.isViewMode),
-          ]),
-          const SizedBox(height: 10),
-          _buildRow([
-            FormHelper.buildTextField('Remarks*', remarksController, isReadOnly: widget.isViewMode, height: 150, onChanged: _markDirty),
-          ]),
-        ],
-      ),
-    );
-  }
+Widget _buildForm(Map<String, String?> dropdownValues) {
+  return Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildRow([
+          FormHelper.buildDateField(context, dateController, 'Date*', isReadOnly: widget.isViewMode, isDateTime: false, onChanged: _markDirty),
+        ]),
+        const SizedBox(height: 10),
+        _buildRow([
+          FormHelper.buildTextField('Name of Donor*', nameController, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+          FormHelper.buildTextField('Name of Item*', inameController, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+        ]),
+        const SizedBox(height: 10),
+        _buildRow([
+          FormHelper.buildDropdown('Kind/Type*', 'selectedType', kindOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedType = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: false
+          ),
+          FormHelper.buildDropdown('Unit Measure*', 'selectedMeasure', unitMeasureOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedMeasure = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: false
+          ),
+        ]),
+        const SizedBox(height: 10),
+        _buildRow([
+          FormHelper.buildTextField('Quantity*', quantityController, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+          FormHelper.buildTextField('Total Cost*', costController, isReadOnly: widget.isViewMode, onChanged: _markDirty),
+          FormHelper.buildDropdown( 'Beneficiaries*', 'selectedBeneficiaries', beneficiariesOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedBeneficiaries = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: false
+          ),
+        ]),
+        const SizedBox(height: 10),
+        _buildRow([
+          FormHelper.buildDropdown('Distribution Process*', 'selectedProcess', distributionProcessOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedProcess = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: false
+          ),
+          FormHelper.buildDropdown('Venue*', 'selectedVenue', venueOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedVenue = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: false
+          ),
+        ]),
+        const SizedBox(height: 10),
+        _buildRow([
+          FormHelper.buildTextField('Remarks*', remarksController, isReadOnly: widget.isViewMode, height: 150, onChanged: _markDirty),
+        ]),
+        const SizedBox(height: 10),
+        _buildRow([
+          _buildPicturesSection(),
+        ]),
+      ],
+    ),
+  );
+}
 
   Widget _buildCloseButton() {
     return Positioned(
@@ -576,50 +776,6 @@ class ReliefReportFormState extends State<ReliefReportForm> {
       ),
     );
   }
-
-  Widget _buildDropdown(String label, String key, List<String> options, Map<String, String?> dropdownValues, {bool isReadOnly = false}) {
-    return SizedBox(
-      height: 35,
-      child: DropdownButtonFormField<String>(
-        decoration: FormHelper.inputDecoration(label), 
-        dropdownColor: Colors.white,
-        value: dropdownValues[key] != null && options.contains(dropdownValues[key]) ? dropdownValues[key] : null,
-        items: options.map((value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14,
-                color: Colors.black,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          );
-        }).toList(),
-        menuMaxHeight: 200.0,
-        isDense: true,
-        onChanged: isReadOnly ? null : (newValue) {
-          setState(() {
-            if (key == 'selectedType') {
-              selectedType = newValue;
-            } else if (key == 'selectedMeasure') {
-              selectedMeasure = newValue;
-            } else if (key == 'selectedBeneficiaries') {
-              selectedBeneficiaries = newValue;
-            } else if (key == 'selectedProcess') {
-              selectedProcess = newValue;
-            } else if (key == 'selectedVenue') {
-              selectedVenue = newValue;
-            }
-            _isDirty = true; 
-          });
-        },
-      ),
-    );
-  }
-
   
   Widget _buildRow(List<Widget> children) {
     return Row(
@@ -650,7 +806,8 @@ class ReliefReportFormState extends State<ReliefReportForm> {
         selectedBeneficiaries != null &&
         selectedProcess != null &&
         selectedVenue != null &&
-        remarksController.text.isNotEmpty) {
+        remarksController.text.isNotEmpty &&
+        picturesController.text.isNotEmpty) {
       try {
         final data = {
           'id': widget.existingData?['id'], 
@@ -665,6 +822,7 @@ class ReliefReportFormState extends State<ReliefReportForm> {
           'process': selectedProcess,
           'venue': selectedVenue,
           'remarks': toCamelCase(remarksController.text),
+          'pictures': picturesControllers.map((controller) => controller.text).toList(),
         };
 
         var url = widget.isUpdateMode 
@@ -696,6 +854,7 @@ class ReliefReportFormState extends State<ReliefReportForm> {
             selectedProcess = null;
             selectedVenue = null;
             remarksController.clear();
+            picturesControllers.clear();
           });
 
           // Show success dialog

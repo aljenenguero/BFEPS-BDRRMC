@@ -22,17 +22,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $process = $data['process'];
     $venue = $data['venue'];
     $remarks = $data['remarks'];
+    $pictures = $data['pictures'];
 
     // Validate input
-    if (empty($id) || empty($report_date) || empty($donor_name) || empty($item_name) || empty($donated_type) || empty($measure) || empty($quantity) || empty($cost) || empty($beneficiaries) || empty($process) || empty($venue) || empty($remarks)) {
+    if (empty($id) || empty($report_date) || empty($donor_name) || empty($item_name) || empty($donated_type) || empty($measure) || empty($quantity) || empty($cost) || empty($beneficiaries) || empty($process) || empty($venue) || empty($remarks)
+    || empty($pictures)) {
         echo json_encode(['success' => false, 'message' => 'All fields are required.']);
         exit;
     }
 
     // Prepare the SQL statement
-    $sql = "UPDATE relief_reports SET report_date=?, donor_name=?, item_name=?, donated_type=?, measure=?, quantity=?, cost=?, beneficiaries=?, process=?, venue=?, remarks=? WHERE id=?";
+    $sql = "UPDATE relief_reports SET report_date=?, donor_name=?, item_name=?, donated_type=?, measure=?, quantity=?, cost=?, beneficiaries=?, process=?, venue=?, remarks=? pictures=? WHERE id=?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssssssssssi", $report_date, $donor_name, $item_name, $donated_type, $measure, $quantity, $cost, $beneficiaries, $process, $venue, $remarks, $id);
+    $stmt->bind_param("ssssssssssssi", $report_date, $donor_name, $item_name, $donated_type, $measure, $quantity, $cost, $beneficiaries, $process, $venue, $remarks, $id);
 
     if ($stmt->execute()) {
         echo json_encode(['success' => true, 'message' => 'Report updated successfully.']);

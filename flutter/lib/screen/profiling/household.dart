@@ -353,6 +353,7 @@ class HouseholdPageState extends State<HouseholdPage> {
       itemCount: paginatedRecords.length,
       itemBuilder: (context, index) {
         final record = paginatedRecords[index];
+        
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: const BoxDecoration(  
@@ -383,6 +384,7 @@ class HouseholdPageState extends State<HouseholdPage> {
                         _deleteHouseholdRecord(record['household_id']);
                       } 
                     },
+                     showEvacuationCenter: false, // Set to true or false based on your requirement
                   ),
                 ),
               ),

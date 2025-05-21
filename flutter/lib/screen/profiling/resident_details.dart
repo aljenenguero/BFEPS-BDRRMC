@@ -304,8 +304,6 @@ import '../../widgets/context/form.dart';
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              _buildViewHouseholdButton(),
-              const SizedBox(width: 10),
               if (!widget.isViewMode) _buildSaveButton(),
               if (widget.isViewMode) _buildUpdateButton(),
             ],
@@ -331,24 +329,6 @@ import '../../widgets/context/form.dart';
           });
         },
         label: 'Edit', 
-      );
-    }
-
-    Widget _buildViewHouseholdButton() {
-      return TextButton(
-        onPressed: () {
-          // Implement the functionality to view the household information
-        },
-        child: const Text(
-          'View Household',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Poppins',
-            color: Color(0xFF878787),
-            decoration: TextDecoration.underline,
-          ),
-        ),
       );
     }
     

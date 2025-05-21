@@ -6,7 +6,7 @@ $data = json_decode(file_get_contents("php://input"), true);
 
 
 // Define required fields
-$required_fields = ['report_date', 'donor_name', 'item_name', 'donated_type', 'measure', 'quantity', 'cost', 'beneficiaries', 'process', 'venue', 'remarks'];
+$required_fields = ['report_date', 'donor_name', 'item_name', 'donated_type', 'measure', 'quantity', 'cost', 'beneficiaries', 'process', 'venue', 'remarks', 'pictures'];
 
 // Check for missing fields
 $missing_fields = [];
@@ -35,8 +35,8 @@ if (!is_numeric($data['quantity']) || !is_numeric($data['cost'])) {
 }
 
 // Prepare the SQL statement with placeholders
-$stmt = $conn->prepare("INSERT INTO relief_reports (report_date, donor_name, item_name, donated_type, measure, quantity, cost, beneficiaries, process, venue, remarks)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO relief_reports (report_date, donor_name, item_name, donated_type, measure, quantity, cost, beneficiaries, process, venue, remarks, pictures)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 // Check if the statement was prepared successfully
 if ($stmt === false) {
@@ -45,7 +45,7 @@ if ($stmt === false) {
 }
 
 // Bind the parameters to the placeholders
-$stmt->bind_param("sssssidssss", 
+$stmt->bind_param("sssssidsssss", 
     $data['report_date'], 
     $data['donor_name'],
     $data['item_name'], 
@@ -56,7 +56,8 @@ $stmt->bind_param("sssssidssss",
     $data['beneficiaries'], 
     $data['process'], 
     $data['venue'], 
-    $data['remarks']
+    $data['remarks'],
+    $data['pictures']
 );
 
 // Execute the statement

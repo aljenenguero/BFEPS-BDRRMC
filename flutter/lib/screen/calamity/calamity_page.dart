@@ -10,6 +10,7 @@ import '../../widgets/buttons/update_button.dart';
 import '../../widgets/context/form.dart';
 import '../../widgets/context/table.dart';
 import '../../widgets/search_bar.dart' as custom;
+import 'evacuation_centers.dart';
 
 class CalamityPage extends StatefulWidget {
   const CalamityPage({super.key});
@@ -265,11 +266,11 @@ class CalamityPageState extends State<CalamityPage> {
       child: Row(
         children: [ 
           const HeaderCellWidget(label: 'Date & Time', flex: 2),
-          const HeaderCellWidget(label: 'Type of Calamity', flex: 2),
-          const HeaderCellWidget(label: 'Calamity Name', flex: 2),
-          const HeaderCellWidget(label: 'Security Level', flex: 2),
-          const HeaderCellWidget(label: 'Cause of Calmity', flex: 2),
-          const HeaderCellWidget(label: 'Evacuation Alert Level Issued', flex: 3),
+          const HeaderCellWidget(label: 'Type of Calamity', flex: 2, center: true),
+          const HeaderCellWidget(label: 'Calamity Name', flex: 2, center: true),
+          const HeaderCellWidget(label: 'Security Level', flex: 2, center: true),
+          const HeaderCellWidget(label: 'Cause of Flood', flex: 2, center: true),
+          const HeaderCellWidget(label: 'Evacuation Alert Level Issued', flex: 2, center: true),
           const HeaderCellWidget(label: 'Status', flex: 2, center: true),
           const HeaderCellWidget(label: 'Action', flex: 1, center: true),
         ],
@@ -289,27 +290,35 @@ class CalamityPageState extends State<CalamityPage> {
             border: Border(bottom: BorderSide(color: Color(0xFFCCCCCC))),
           ),
           child: Row(
-            children: [ 
+            children: [
               DataCellWidget(value: calamity['date_time'] ?? '', flex: 2),
-              DataCellWidget(value: calamity['calamity_name'] ?? '', flex: 2),
-              DataCellWidget(value: calamity['calamity_type'] ?? '', flex: 2),
-              DataCellWidget(value: calamity['severity_level'] ?? '', flex: 2),
-              DataCellWidget(value: calamity['cause'] ?? '', flex: 2),
-              DataCellWidget(value: calamity['alert_level'] ?? '', flex: 3),
+              DataCellWidget(value: calamity['calamity_name'] ?? '', flex: 2, center: true),
+              DataCellWidget(value: calamity['calamity_type'] ?? '', flex: 2, center: true),
+              DataCellWidget(value: calamity['severity_level'] ?? '', flex: 2, center: true),
+              DataCellWidget(value: calamity['cause'] ?? '', flex: 2, center: true),
+              DataCellWidget(value: calamity['alert_level'] ?? '', flex: 2, center: true),
               DataCellWidget(value: calamity['current_status'] ?? '', flex: 2, center: true),
               Expanded(
                 flex: 1,
                 child: Center(
                   child: PopupMenuWidget(
                     onSelected: (value) {
-                      if (value == 'View') {
-                        _showReliefForm(context, calamity, isViewMode: true);
+                      if (value == 'View Evacuation Center') {
+                        Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Evacuationcenters(
+                            calamity: calamity,
+                          ),
+                        ),
+                      );
                       } else if (value == 'Update') {
                         _showReliefForm(context, calamity, isViewMode: false);
                       } else if (value == 'Delete') {
                         _deleteCalamity(calamity['id']);
                       }
                     },
+                    showEvacuationCenter: true, // Set to true or false based on your requirement
                   ),
                 ),
               ),
@@ -318,8 +327,8 @@ class CalamityPageState extends State<CalamityPage> {
         );
       },
     );
-  }           
-
+  }
+  
   void _showReliefForm(BuildContext context, Map<String, dynamic>? existingData, {bool isViewMode = false}) {
     showDialog(
       context: context,
@@ -460,17 +469,57 @@ class CalamityFormState extends State<CalamityForm> {
           const SizedBox(height: 10),
           _buildRow([
             FormHelper.buildDateField(context, dateController, 'Date & Time*', isReadOnly: widget.isViewMode, isDateTime: true, onChanged: _markDirty),
-            _buildDropdown('Type of Calamity*', 'selectedCalamityType' ,calamityTypeOptions, dropdownValues, isReadOnly: widget.isViewMode),
+            FormHelper.buildDropdown('Type of Calamity*', 'selectedCalamityType' ,calamityTypeOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedCalamityType = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: false
+            ),
           ]),
           const SizedBox(height: 10),
           _buildRow([
-            _buildDropdown('Severity Level', 'selectedLevel', severityLevelOptions, dropdownValues, isReadOnly: widget.isViewMode),
-            _buildDropdown('Cause of Flood*', 'selectedCause', floodCauseOptions, dropdownValues, isReadOnly: widget.isViewMode),
+            FormHelper.buildDropdown('Severity Level', 'selectedLevel', severityLevelOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedLevel = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: false
+            ),
+            FormHelper.buildDropdown('Cause of Flood*', 'selectedCause', floodCauseOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedCause = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: false
+            ),
           ]),
           const SizedBox(height: 10),
           _buildRow([
-            _buildDropdown('Evacuation Alert Level Issued*', 'selectedAlert' ,alertIssuedOptions, dropdownValues, isReadOnly: widget.isViewMode),
-            _buildDropdown('Current Status*', 'selectedStatus' ,statusOptions, dropdownValues, isReadOnly: widget.isViewMode),
+            FormHelper.buildDropdown('Evacuation Alert Level Issued*', 'selectedAlert' ,alertIssuedOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedAlert = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: false
+            ),
+            FormHelper.buildDropdown('Current Status*', 'selectedStatus' ,statusOptions, dropdownValues, isReadOnly: widget.isViewMode,
+            onChanged: widget.isViewMode ? null : (newValue) {
+              setState(() {
+                selectedStatus = newValue;
+                _isDirty = true;
+              });
+            },
+            allowCustomInput: true
+            ),
           ]),
         ],
       ),
@@ -524,49 +573,6 @@ class CalamityFormState extends State<CalamityForm> {
           });
         },
         label: 'Edit', 
-      ),
-    );
-  }
-
-  Widget _buildDropdown(String label, String key, List<String> options, Map<String, String?> dropdownValues, {bool isReadOnly = false}) {
-    return SizedBox(
-      height: 35,
-      child: DropdownButtonFormField<String>(
-        decoration: FormHelper.inputDecoration(label), 
-        dropdownColor: Colors.white,
-        value: dropdownValues[key] != null && options.contains(dropdownValues[key]) ? dropdownValues[key] : null,
-        items: options.map((value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14,
-                color: Colors.black,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          );
-        }).toList(),
-        menuMaxHeight: 200.0,
-        isDense: true,
-        onChanged: isReadOnly ? null : (newValue) {
-          setState(() {
-            if (key == 'selectedCalamityType') {
-              selectedCalamityType = newValue;
-            } else if (key == 'selectedLevel') {
-              selectedLevel = newValue;
-            } else if (key == 'selectedCause') {
-              selectedCause = newValue;
-            } else if (key == 'selectedAlert') {
-              selectedAlert = newValue;
-            } else if (key == 'selectedStatus') {
-              selectedStatus = newValue;
-            }
-            _isDirty = true; 
-          });
-        },
       ),
     );
   }

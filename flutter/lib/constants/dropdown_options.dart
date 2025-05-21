@@ -74,6 +74,16 @@ const List<String> severityLevelOptions = ['Minor Flooding', 'Moderate Flooding'
 
 const List<String> floodCauseOptions = ['Heavy Rainfall', 'River Overflow', 'Urban Drainage Overflow', 'Typhoon'];
 
-const List<String> alertIssuedOptions = [ 'Pre Evacuation', 'Mandatory Evacuation',];
+const List<String> alertIssuedOptions = [ 'Pre Evacuation', 'Mandatory Evacuation'];
 
-const List<String> statusOptions = ['Ongoing', 'Under Control', 'Resolved', 'Other(Specify)'];
+const List<String> statusOptions = ['Ongoing', 'Under Control', 'Resolved'];
+
+
+///EVACUATION CENTER DROPDOWN OPTIONS
+
+const List<String> evacuationCentersNameOptions = ['School', 'Barangay Hall', 'Residence'];
+
+const List<String> contactPersonOptions = ['Site Manager 1', 'Site Manager 2', 'Site Manager 3', 'Site Manager 4'];
+
+
+

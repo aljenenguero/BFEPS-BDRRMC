@@ -2,19 +2,37 @@ import 'package:flutter/material.dart';
 
 class PopupMenuWidget extends StatelessWidget {
   final Function(String) onSelected;
+  final bool showEvacuationCenter; // New parameter
 
-  const PopupMenuWidget({super.key, required this.onSelected});
+  const PopupMenuWidget({
+    super.key,
+    required this.onSelected,
+    this.showEvacuationCenter = true, // Default to true
+  });
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       color: Colors.white,
       onSelected: onSelected,
-      itemBuilder: (context) => [
-        _buildPopupMenuItem('View Record', 'View'),
-        _buildPopupMenuItem('Update', 'Update'),
-        _buildPopupMenuItem('Delete', 'Delete'),
-      ],
+      itemBuilder: (context) {
+        // Build the list of menu items
+        List<PopupMenuItem<String>> items = [];
+
+        // Add the "View Evacuation Center" item if the flag is true
+        if (showEvacuationCenter) {
+          items.add(_buildPopupMenuItem('View Evacuation Center', 'View Evacuation Center'));
+        } else {
+          // Add the "View Record" item if the evacuation center is not shown
+          items.add(_buildPopupMenuItem('View Record', 'View'));
+        }
+
+        // Always add the "Update" and "Delete" options
+        items.add(_buildPopupMenuItem('Update', 'Update'));
+        items.add(_buildPopupMenuItem('Delete', 'Delete'));
+
+        return items;
+      },
       child: const Icon(Icons.more_vert),
     );
   }
@@ -33,6 +51,7 @@ class PopupMenuWidget extends StatelessWidget {
     );
   }
 }
+
 
 class DataCellWidget extends StatelessWidget {
   final dynamic value;

@@ -345,6 +345,7 @@ class IndividualPageState extends State<IndividualPage> {
                         // add logic
                       }
                     },
+                    showEvacuationCenter: false, // Set to true or false based on your requirement
                   ),
                 ),
               ),
